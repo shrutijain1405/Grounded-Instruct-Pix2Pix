@@ -140,7 +140,7 @@ class ExternalMaskExtractor():
     
 
     def get_bounding_boxes(self, image, image_path, prompt):
-        prompt = f"You are helping me with image editing. Given this prompt - \"{prompt}\" to edit the image, return the bounding boxes of the areas that need to be edited in JSON fomrat like {{\"bbox_2d\":[x1,y1,x2,y2]}}."
+        prompt = f"You are helping me with image editing. Given this prompt - \"{prompt}\" to edit the image, return all the bounding boxes of the areas that need to be edited in JSON fomrat like {{\"bbox_2d\":[x1,y1,x2,y2]}}."
         messages = [
             {
                 "role": "user",

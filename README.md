@@ -41,11 +41,11 @@ CLIP-Score↑ | 24.314 (4.193) | 23.255 (3.656) | 19.306 (4.167) | 25.144 (4.083
 
 
 
-## Installation
+## Installation for dino+sam grounded pix2pix
 
-conda create --name grndpix2pix -y python=3.10
+conda create --name dinopix2pix -y python=3.10
 
-conda activate grndpix2pix
+conda activate dinopix2pix
 
 
 ---
@@ -67,7 +67,56 @@ python -m spacy download en_core_web_sm
 Lastly, to install GroundingDINO:
 
 
-export CUDA_HOME=/usr/local/cuda
+export CUDA_HOME=/path/to/your/cuda/installation
+
+git clone https://github.com/IDEA-Research/GroundingDINO.git
+cd GroundingDINO
+pip install torch==2.4.1+cu124 torchvision==0.19.1+cu124 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu124
+python setup.py install
+
+mkdir weights
+cd weights
+wget https://github.com/IDEA-Research/GroundingDINO/releases/download/v0.1.0-alpha/groundingdino_swint_ogc.pth
+cd ../../
+
+
+pip install addict
+
+pip install yapf
+
+pip install matplotlib
+
+pip install pycocotools
+
+pip install timm
+
+pip install supervision
+
+pip install huggingface_hub==0.23.0
+
+## Installation for qwen+sam grounded pix2pix
+
+conda create --name qwenpix2pix -y python=3.10
+
+conda activate qwenpix2pix
+
+
+---
+
+We provide a requirements.txt that contains most of the dependencies needed. To install them just run:
+
+
+pip install -r requirements.txt
+
+
+You will need to download the NLP model separately with:
+
+
+pip install -U "spacy==3.8.2" "numpy<2"
+
+python -m spacy download en_core_web_sm
+
+export CUDA_HOME=/path/to/your/cuda/installation
 
 pip install torch==2.4.1+cu124 torchvision==0.19.1+cu124 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu124
 
@@ -83,6 +132,9 @@ pip install timm
 
 pip install supervision
 
+pip install transformers==4.57.0
+
+pip install qwen_vl_utils
 
 ## Tips and Examples
 

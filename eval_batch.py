@@ -22,16 +22,16 @@ if __name__ == "__main__":
     device = "cuda:0"
     num_timesteps = 100
     image_guidance_scale = 1.5
-    text_guidance_scale = 12.5
+    text_guidance_scale = 7.5
     seed = 42
     blending_range = [100, 1]
     verbose = False
 
-    edit_instruction = "Turn the table pink"
+    edit_instruction = "Turn the table into a white marble table"
     
 
-    input_folder = "/home/ubuntu/spjain/Grounded-Instruct-Pix2Pix/src/garden"
-    output_folder = "/home/ubuntu/spjain/Grounded-Instruct-Pix2Pix/src/edited_garden_pink_table_qwen"
+    input_folder = "/home/ubuntu/spjain/Qwen-SAM-Instruct-Pix2Pix/src/garden"
+    output_folder = "/home/ubuntu/spjain/Qwen-SAM-Instruct-Pix2Pix/src/edited/garden_dino_marble_100iters_bb100"
     os.makedirs(output_folder, exist_ok=True)
 
     # -----------------------------
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         prompt=edit_instruction,
         seed=seed,
         verbose=verbose,
-        debug = True
+        debug = True, mode='dino'
     )
 
     # -----------------------------
@@ -62,8 +62,11 @@ if __name__ == "__main__":
     # -----------------------------
     # Batch editing
     # -----------------------------
+    i = 0
     for img_path in tqdm(image_paths, desc="Editing Images"):
-
+        if(i>10):
+            break
+        i+=1
         # Load and resize
         img_pil = editor.load_pil_image(img_path)
 

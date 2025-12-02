@@ -7,7 +7,6 @@ import torch
 from torchvision import transforms
 
 from diffusers import DDIMScheduler, DDIMInverseScheduler
-from external_mask_extractor_qwen import ExternalMaskExtractor
 from pipeline_stable_diffusion_grounded_instruct_pix2pix import StableDiffusionInstructPix2PixPipeline
 
 from transformers import logging
@@ -18,7 +17,7 @@ class GroundedInstructPixtoPix():
     def __init__(self, num_timesteps: int = 100, device: str = 'cuda:0', image_guidance_scale: float = 1.5, 
                  text_guidance_scale: float = 7.5, start_blending_at_tstep: int = 100,
                  end_blending_at_tstep: int = 1, prompt: str = '', seed: int = 42, 
-                 verbose: bool = False, debug: bool = False):
+                 verbose: bool = False, debug: bool = False, mode='dino'):
         
         self.num_timesteps = num_timesteps
         self.device = device
@@ -27,8 +26,19 @@ class GroundedInstructPixtoPix():
         self.prompt = prompt
         self.seed = seed
         self.verbose = verbose
-        self.blending_range = [start_blending_at_tstep,end_blending_at_tstep]
+        self.mode=mode
+        if mode=='dino':
+            from external_mask_extractor import ExternalMaskExtractor
+        elif mode=='qwen':
+            from external_mask_extractor_qwen import ExternalMaskExtractor
+        else:
+            #default 'dino'
+            print("Error: mode: \'",mode,"\' not valid. Defaulting to mode \'dino\'")
+            self.mode = 'dino'
+            from external_mask_extractor import ExternalMaskExtractor
+
         self.mask_extractor = ExternalMaskExtractor(device=self.device, debug = debug)
+        self.blending_range = [start_blending_at_tstep,end_blending_at_tstep]
         self.pipeline = StableDiffusionInstructPix2PixPipeline.from_pretrained("timbrooks/instruct-pix2pix",
                                                                                 torch_dtype=torch.float16,
                                                                                 safety_checker=None).to(self.device)
@@ -48,12 +58,14 @@ class GroundedInstructPixtoPix():
         image = ImageOps.fit(image, (width, height), method=Image.Resampling.LANCZOS)
         return image
 
-
-
     def edit_image(self, image, img_path):
         # to_pil = transforms.ToPILImage()
         # image = to_pil(image)
-        external_mask_pil = self.mask_extractor.get_external_mask(image, img_path, self.prompt, verbose=self.verbose)
+        if(self.mode=='dino'):
+            external_mask_pil, chosen_noun_phrase, clip_scores_dict = self.mask_extractor.get_external_mask(image, self.prompt, verbose=self.verbose)
+        else: #qwen
+            external_mask_pil = self.mask_extractor.get_external_mask(image, img_path, self.prompt, verbose=self.verbose)
+
         inv_results = self.pipeline.invert(self.prompt, image, num_inference_steps=self.num_timesteps, inv_range=self.blending_range) #noising
         generator = torch.Generator(self.device).manual_seed(self.seed) if self.seed is not None else torch.Generator(self.device)
         edited_image = self.pipeline(self.prompt, src_mask=external_mask_pil, image=image,
