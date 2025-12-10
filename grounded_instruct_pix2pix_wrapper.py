@@ -58,13 +58,13 @@ class GroundedInstructPixtoPix():
         image = ImageOps.fit(image, (width, height), method=Image.Resampling.LANCZOS)
         return image
 
-    def edit_image(self, image, img_path):
+    def edit_image(self, image):
         # to_pil = transforms.ToPILImage()
         # image = to_pil(image)
         if(self.mode=='dino'):
             external_mask_pil, chosen_noun_phrase, clip_scores_dict = self.mask_extractor.get_external_mask(image, self.prompt, verbose=self.verbose)
         else: #qwen
-            external_mask_pil = self.mask_extractor.get_external_mask(image, img_path, self.prompt, verbose=self.verbose)
+            external_mask_pil = self.mask_extractor.get_external_mask(image, self.prompt, verbose=self.verbose)
 
         inv_results = self.pipeline.invert(self.prompt, image, num_inference_steps=self.num_timesteps, inv_range=self.blending_range) #noising
         generator = torch.Generator(self.device).manual_seed(self.seed) if self.seed is not None else torch.Generator(self.device)

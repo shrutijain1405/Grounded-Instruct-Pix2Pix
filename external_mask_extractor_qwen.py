@@ -21,6 +21,7 @@ import io
 import ast
 from io import BytesIO
 import xml.etree.ElementTree as ET
+import base64
 
 class ExternalMaskExtractor():
     def __init__(self, device, debug=False) -> None:
@@ -139,16 +140,21 @@ class ExternalMaskExtractor():
 
     
 
-    def get_bounding_boxes(self, image, image_path, prompt):
-        prompt = f"You are helping me with image editing. Given this prompt - \"{prompt}\" to edit the image, return all the bounding boxes of the areas that need to be edited in JSON fomrat like {{\"bbox_2d\":[x1,y1,x2,y2]}}."
+    def get_bounding_boxes(self, image, prompt):
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")   # or JPEG
+        buffer.seek(0)
+
+        base_64_img = base64.b64encode(buffer.read()).decode("utf-8")
+        prompt = f"You are helping me with image editing. Given this prompt - \"{prompt}\" to edit the image, return all the bounding boxes of the areas that need to be edited in JSON fomrat like {{\"bbox_2d\":[x1,y1,x2,y2]}}. Dont return any bounding box if the object to be edited doesnt exist."
         messages = [
             {
                 "role": "user",
                 "content": [
                     {   
-                        "type": "image_url",
+                        "type": "image",
                         # You can set the min_pixels and max_pixels to control the size of the image according to your use case.
-                        "image": image_path
+                        "image": f"data:image/png;base64,{base_64_img}"
                     },
                     {
                         "type": "text",
@@ -228,9 +234,9 @@ class ExternalMaskExtractor():
 
 
     @torch.no_grad()
-    def get_external_mask(self, image, image_path, prompt, mask_dilation_size=11, verbose=False):
+    def get_external_mask(self, image, prompt, mask_dilation_size=11, verbose=False):
         # Extract all noun-phrases
-        bounding_boxes_raw = self.get_bounding_boxes(image,image_path, prompt) #use qwen3vl
+        bounding_boxes_raw = self.get_bounding_boxes(image, prompt) #use qwen3vl
         bounding_boxes =self.plot_bounding_boxes(image,bounding_boxes_raw)
         # Extract its mask
         external_mask = self._sam_predict(image, bounding_boxes)
